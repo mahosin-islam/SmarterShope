@@ -1,30 +1,41 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import './globals.css';
+import { AuthProvider } from '@/features/auth/authContext';
+import { AuthModalProvider } from '@/lib/authModal.context';
+import { AuthModal } from '@/components/auth/AuthModal';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "MODORA — Minimalist European Luxury & Artisanal Wardrobe",
+  title: 'MODORA — Minimalist European Luxury & Artisanal Wardrobe',
   description:
-    "Qualitative tailoring and artisanal wardrobe foundations. Fluid monochromes, tailored coats, and curated archives.",
+    'Qualitative tailoring and artisanal wardrobe foundations. Fluid monochromes, tailored coats, and curated archives.',
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>
+          <AuthModalProvider>
+            {children}
+            {/* AuthModal rendered at root so it works on every page */}
+            <AuthModal />
+          </AuthModalProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
