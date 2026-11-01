@@ -44,12 +44,14 @@ function LoginForm({ onSwitch, onSuccess }: LoginFormProps) {
 
       setIsSubmitting(true);
       try {
-        await login({ email: email.trim(), password });
+        const loggedUser = await login({ email: email.trim(), password });
         onSuccess();
-        // Redirect based on role — role is now in auth context user object
-        // We read it after login resolves; useAuth() state updates asynchronously
-        // so we push to a role-aware page and let middleware handle it.
-        router.push('/');
+        // Redirect based on actual user role
+        if (loggedUser.role === 'ADMIN' || loggedUser.role === 'STAFF') {
+          router.push('/admin/dashboard');
+        } else {
+          router.push('/');
+        }
         router.refresh();
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
@@ -211,7 +213,6 @@ function RegisterForm({ onSwitch, onSuccess }: RegisterFormProps) {
       e.preventDefault();
       setError('');
 
-      if (!firstName.trim()) { setError('First name is required.'); return; }
       if (!email.trim() || !isValidEmail(email)) { setError('Please enter a valid email address.'); return; }
       if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
       if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
@@ -221,7 +222,7 @@ function RegisterForm({ onSwitch, onSuccess }: RegisterFormProps) {
         await register({
           email: email.trim(),
           password,
-          firstName: firstName.trim(),
+          firstName: firstName.trim() || undefined,
           lastName: lastName.trim() || undefined,
         });
         onSuccess();

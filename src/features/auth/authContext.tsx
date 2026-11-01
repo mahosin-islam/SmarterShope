@@ -70,8 +70,8 @@ interface AuthContextValue {
   tokens: AuthTokens | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (payload: LoginPayload) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<AuthUser>;
+  register: (payload: RegisterPayload) => Promise<AuthUser>;
   logout: () => Promise<void>;
 }
 
@@ -112,20 +112,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
-  const login = useCallback(async (payload: LoginPayload) => {
+  const login = useCallback(async (payload: LoginPayload): Promise<AuthUser> => {
     const { user: loggedUser, tokens: newTokens } = await authService.login(payload);
     saveTokens(newTokens);
     saveRoleCookie(loggedUser.role);
     setUser(loggedUser);
     setTokens(newTokens);
+    return loggedUser;
   }, []);
 
-  const register = useCallback(async (payload: RegisterPayload) => {
+  const register = useCallback(async (payload: RegisterPayload): Promise<AuthUser> => {
     const { user: newUser, tokens: newTokens } = await authService.register(payload);
     saveTokens(newTokens);
     saveRoleCookie(newUser.role);
     setUser(newUser);
     setTokens(newTokens);
+    return newUser;
   }, []);
 
   const logout = useCallback(async () => {
