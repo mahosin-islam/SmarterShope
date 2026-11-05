@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/features/auth/authContext';
-import { AuthModalProvider } from '@/lib/authModal.context';
-import { AuthModal } from '@/components/auth/AuthModal';
+import { AuthProvider } from '@/features/auth/contexts/authContext';
+import { AuthModalProvider } from '@/features/auth/contexts/authModal.context';
+import { AuthModal } from '@/features/auth/components/AuthModal';
+import { GoogleOneTap } from '@/features/auth/components/GoogleOneTap';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,6 +34,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
             {/* AuthModal rendered at root so it works on every page */}
             <AuthModal />
+            {/* Google One Tap prompt for visitors */}
+            <GoogleOneTap />
           </AuthModalProvider>
         </AuthProvider>
       </body>

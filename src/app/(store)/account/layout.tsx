@@ -4,7 +4,7 @@
 import React from 'react';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
-import { AccountSidebar } from '@/components/store/AccountSidebar';
+import { AccountSidebar } from '@/components/layouts/customer/AccountSidebar';
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   return (

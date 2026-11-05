@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Menu, Search, X, Heart, ShoppingBag, User, LayoutDashboard, LogOut, ChevronDown } from 'lucide-react';
-import { useAuth } from '@/features/auth/authContext';
-import { useAuthModal } from '@/lib/authModal.context';
+import { Menu, Search, X, Heart, ShoppingBag, User, LayoutDashboard, LogOut, ChevronDown, Mail } from 'lucide-react';
+import { useAuth } from '@/features/auth/contexts/authContext';
+import { useAuthModal } from '@/features/auth/contexts/authModal.context';
+import { useGoogleAccounts } from '@/features/auth/hooks/useGoogleAccounts';
 
 const NAV_LINKS = [
   { label: 'Tailoring', href: '/products?category=tailoring' },
@@ -17,6 +18,7 @@ const NAV_LINKS = [
 export const Navbar: React.FC = () => {
   const { user, isLoading, logout } = useAuth();
   const { openAuthModal } = useAuthModal();
+  const { accounts: googleAccounts } = useGoogleAccounts();
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -161,8 +163,31 @@ export const Navbar: React.FC = () => {
               )}
             </div>
           ) : (
-            /* Guest: Login / Register buttons */
+            /* Guest: Google account chips + Login / Register buttons */
             <div className="flex items-center gap-2">
+              {googleAccounts.length > 0 && (
+                <>
+                  <span className="px-2 py-1 text-[10px] text-neutral-500 hidden sm:block">Sign in as:</span>
+                  {googleAccounts.map((acct) => (
+                    <button
+                      key={acct.email}
+                      type="button"
+                      onClick={() => {
+                        if (typeof window !== 'undefined' && window.googleTriggerPrompt) {
+                          window.googleTriggerPrompt();
+                        } else {
+                          openAuthModal('login');
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-[#e8e6e3] bg-white text-xs font-medium text-neutral-800 hover:border-[#ff4600] hover:text-[#ff4600] transition-colors focus:outline-none"
+                      aria-label={`Sign in with ${acct.email}`}
+                    >
+                      <Mail className="w-3 h-3 text-neutral-500" />
+                      <span className="truncate max-w-[120px]">{acct.email}</span>
+                    </button>
+                  ))}
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => openAuthModal('login')}

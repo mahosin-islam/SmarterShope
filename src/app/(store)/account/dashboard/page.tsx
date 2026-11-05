@@ -5,7 +5,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ShoppingBag, Heart, MapPin, User, ArrowUpRight } from 'lucide-react';
-import { useAuth } from '@/features/auth/authContext';
+import { useAuth } from '@/features/auth/contexts/authContext';
 
 export default function AccountDashboardPage() {
   const { user } = useAuth();
