@@ -46,13 +46,29 @@ function parseFieldErrors(details: unknown): BrandFieldError[] {
   });
 }
 
+function getCsrfToken(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )modora_csrf_token=([^;]*)/);
+  return match ? match[1] : null;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  // Add CSRF token for state-changing methods
+  if (options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method)) {
+    const token = getCsrfToken();
+    if (token) {
+      headers['X-CSRF-Token'] = token;
+    }
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
     credentials: 'include',
     cache: 'no-store',
   });
