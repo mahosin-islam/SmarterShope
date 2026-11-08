@@ -4,8 +4,8 @@ import { Navbar } from '@/components/shared/Navbar';
 import { HeroSection } from '@/features/store/home/components/HeroSection';
 import { TickerStrip } from '@/features/store/home/components/TickerStrip';
 import { CuratedArchives, CuratedArchivesSkeleton } from '@/features/store/home/components/CuratedArchives';
+import { FeaturedCollection, FeaturedCollectionSkeleton } from '@/features/store/home/components/FeaturedCollection';
 import { EditorialBanner } from '@/features/store/home/components/EditorialBanner';
-import { NewArrivalsSection, NewArrivalsSkeleton } from '@/features/store/home/components/NewArrivalsSection';
 import { EditorialQuote } from '@/features/store/home/components/EditorialQuote';
 import { BrandManifesto } from '@/features/store/home/components/BrandManifesto';
 import { AtelierNewsletter } from '@/features/store/home/components/AtelierNewsletter';
@@ -33,28 +33,28 @@ export default function HomePage() {
           <CuratedArchives />
         </Suspense>
 
-        {/* 6. Mid-Page Editorial Feature & Value Props */}
-        <EditorialBanner />
-
-        {/* 8. New Arrivals Drop 01 */}
-        <Suspense fallback={<NewArrivalsSkeleton />}>
-          <NewArrivalsSection />
+        {/* 6. Featured Collection */}
+        <Suspense fallback={<FeaturedCollectionSkeleton />}>
+          <FeaturedCollection />
         </Suspense>
 
-        {/* 9. Editorial Testimonial Quote */}
+        {/* 7. Mid-Page Editorial Feature & Value Props */}
+        <EditorialBanner />
+
+        {/* 8. Editorial Testimonial Quote */}
         <EditorialQuote />
 
-        {/* 10. Brand Manifesto & Accordions */}
+        {/* 9. Brand Manifesto & Accordions */}
         <BrandManifesto />
 
-        {/* 11. Atelier Membership Newsletter */}
+        {/* 10. Atelier Membership Newsletter */}
         <AtelierNewsletter />
       </main>
 
-      {/* 12. Main Footer */}
+      {/* 11. Main Footer */}
       <Footer />
 
-      {/* 13. Mobile Bottom Navigation */}
+      {/* 12. Mobile Bottom Navigation */}
       <MobileBottomNav />
     </div>
   );
