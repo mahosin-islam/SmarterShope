@@ -3,7 +3,7 @@ import type {
   BrandFormPayload,
   BrandFieldError,
 } from '../types/brand.types';
-import { getCsrfToken } from '@/lib/csrf';
+import { getCsrfToken, invalidateCsrfToken } from '@/lib/csrf';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
 
@@ -71,6 +71,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const body = (await response.json().catch(() => null)) as ApiErrorBody | ApiSuccessBody<T> | null;
 
   if (!response.ok) {
+    if (response.status === 403) {
+      invalidateCsrfToken();
+    }
     const errorBody = body && 'error' in body ? body.error : undefined;
     throw new AdminBrandApiError(
       errorBody?.message || `Request failed with status ${response.status}`,
