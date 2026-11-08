@@ -8,6 +8,7 @@ import type {
   ProductSortOrder,
 } from '../types/product-list.types';
 import { getCsrfToken } from '@/lib/csrf';
+import { authService, getAccessToken } from '@/features/auth/services/auth.service';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
 
@@ -65,24 +66,47 @@ function parseFieldErrors(details: unknown): { field: string; message: string }[
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...((options.headers as Record<string, string>) || {}),
+  const buildHeaders = async () => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...((options.headers as Record<string, string>) || {}),
+    };
+
+    const authToken = getAccessToken();
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    if (options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method)) {
+      const token = await getCsrfToken();
+      if (token) {
+        headers['X-CSRF-Token'] = token;
+      }
+    }
+
+    return headers;
   };
 
-  if (options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method)) {
-    const token = await getCsrfToken();
-    if (token) {
-      headers['X-CSRF-Token'] = token;
-    }
-  }
-
-  const response = await fetch(`${API_URL}${path}`, {
+  let headers = await buildHeaders();
+  let response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
     credentials: 'include',
     cache: 'no-store',
   });
+
+  if (response.status === 401) {
+    const refreshed = await authService.refresh();
+    if (refreshed) {
+      headers = await buildHeaders();
+      response = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers,
+        credentials: 'include',
+        cache: 'no-store',
+      });
+    }
+  }
 
   const body = (await response.json().catch(() => null)) as ApiErrorBody | ApiSuccessBody<T> | null;
 
@@ -104,15 +128,36 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 async function requestList<T>(path: string, options: RequestInit = {}): Promise<{ data: T[]; meta?: PaginationMeta }> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const authToken = getAccessToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  let response = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
     credentials: 'include',
     cache: 'no-store',
   });
+
+  if (response.status === 401) {
+    const refreshed = await authService.refresh();
+    if (refreshed) {
+      const newToken = getAccessToken();
+      const retryHeaders = {
+        ...headers,
+        ...(newToken ? { 'Authorization': `Bearer ${newToken}` } : {}),
+      };
+      response = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers: retryHeaders,
+        credentials: 'include',
+        cache: 'no-store',
+      });
+    }
+  }
 
   const body = (await response.json().catch(() => null)) as ApiErrorBody | ApiListSuccessBody<T> | null;
 

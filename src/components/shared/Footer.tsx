@@ -102,7 +102,7 @@ export const Footer: React.FC = () => {
 
         {/* Copyright */}
         <div className="pt-6 border-t border-[#f0eeed] text-center sm:text-left text-[11px] text-neutral-400 font-light">
-          &copy; 2026 MODORA Inc. All rights reserved. Registered trademark of MODORA Atelier France / Suisse.
+          &copy; 2026 November MODORA Inc. All rights reserved. Registered trademark of MODORA Atelier France / Suisse.
         </div>
       </div>
     </footer>

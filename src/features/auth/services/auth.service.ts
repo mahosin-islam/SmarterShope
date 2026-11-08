@@ -1,10 +1,31 @@
 // Auth API service — calls backend at NEXT_PUBLIC_API_URL
-// All requests use credentials: 'include' so HTTP-only cookies are sent.
-// Tokens are NOT stored in localStorage; they live in HttpOnly cookies.
+// Dual authentication support: HTTP-only cookies + Authorization Bearer header
+// Ensures seamless authentication even when third-party cookies are partitioned or blocked.
 
 import type { AuthUser, LoginPayload, RegisterPayload } from '@/features/auth/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+
+let inMemoryAccessToken: string | null = null;
+
+export function getAccessToken(): string | null {
+  if (inMemoryAccessToken) return inMemoryAccessToken;
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('modora_access_token');
+  }
+  return null;
+}
+
+export function setAccessToken(token: string | null): void {
+  inMemoryAccessToken = token;
+  if (typeof window !== 'undefined') {
+    if (token) {
+      localStorage.setItem('modora_access_token', token);
+    } else {
+      localStorage.removeItem('modora_access_token');
+    }
+  }
+}
 
 interface ApiSuccessResponse<T> {
   success: true;
@@ -58,9 +79,14 @@ async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 function requestOptions(body?: unknown): RequestInit {
+  const token = getAccessToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   return {
     method: body ? 'POST' : 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
     credentials: 'include'
   };
@@ -94,7 +120,10 @@ async function performRefresh(): Promise<boolean> {
         throw new Error('Refresh failed');
       }
 
-      await res.json();
+      const json = await res.json();
+      if (json?.data?.accessToken) {
+        setAccessToken(json.data.accessToken);
+      }
       clearRefreshLock();
       return true;
     } catch {
@@ -109,17 +138,26 @@ async function performRefresh(): Promise<boolean> {
 export const authService = {
   async login(payload: LoginPayload): Promise<AuthUser> {
     const res = await fetch(`${API_URL}/auth/login`, requestOptions(payload));
+    const json = (await res.clone().json().catch(() => null)) as { data?: { accessToken?: string } } | null;
+    if (json?.data?.accessToken) {
+      setAccessToken(json.data.accessToken);
+    }
     const data = await handleResponse<AuthData>(res);
     return data.user;
   },
 
   async register(payload: RegisterPayload): Promise<AuthUser> {
     const res = await fetch(`${API_URL}/auth/register`, requestOptions(payload));
+    const json = (await res.clone().json().catch(() => null)) as { data?: { accessToken?: string } } | null;
+    if (json?.data?.accessToken) {
+      setAccessToken(json.data.accessToken);
+    }
     const data = await handleResponse<AuthData>(res);
     return data.user;
   },
 
   async logout(): Promise<void> {
+    setAccessToken(null);
     await fetch(`${API_URL}/auth/logout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -132,9 +170,14 @@ export const authService = {
   },
 
   async getMe(): Promise<AuthUser> {
+    const token = getAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const res = await fetch(`${API_URL}/auth/me`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       credentials: 'include'
     });
     const profile = await handleResponse<ProfileData>(res);
@@ -150,6 +193,10 @@ export const authService = {
 
   async googleOneTap(credential: string): Promise<AuthUser> {
     const res = await fetch(`${API_URL}/auth/google/one-tap`, requestOptions({ credential }));
+    const json = (await res.clone().json().catch(() => null)) as { data?: { accessToken?: string } } | null;
+    if (json?.data?.accessToken) {
+      setAccessToken(json.data.accessToken);
+    }
     const data = await handleResponse<AuthData>(res);
     return data.user;
   },

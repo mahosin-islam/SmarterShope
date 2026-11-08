@@ -4,6 +4,7 @@ import type {
   BrandFieldError,
 } from '../types/brand.types';
 import { getCsrfToken, invalidateCsrfToken } from '@/lib/csrf';
+import { authService, getAccessToken } from '@/features/auth/services/auth.service';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
 
@@ -48,25 +49,48 @@ function parseFieldErrors(details: unknown): BrandFieldError[] {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...((options.headers as Record<string, string>) || {}),
+  const buildHeaders = async () => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...((options.headers as Record<string, string>) || {}),
+    };
+
+    const authToken = getAccessToken();
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    if (options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method)) {
+      const token = await getCsrfToken();
+      if (token) {
+        headers['X-CSRF-Token'] = token;
+      }
+    }
+
+    return headers;
   };
 
-  // Add CSRF token for state-changing methods
-  if (options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method)) {
-    const token = await getCsrfToken();
-    if (token) {
-      headers['X-CSRF-Token'] = token;
-    }
-  }
-
-  const response = await fetch(`${API_URL}${path}`, {
+  let headers = await buildHeaders();
+  let response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
     credentials: 'include',
     cache: 'no-store',
   });
+
+  // Automatically refresh access token on 401 and retry once
+  if (response.status === 401) {
+    const refreshed = await authService.refresh();
+    if (refreshed) {
+      headers = await buildHeaders();
+      response = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers,
+        credentials: 'include',
+        cache: 'no-store',
+      });
+    }
+  }
 
   const body = (await response.json().catch(() => null)) as ApiErrorBody | ApiSuccessBody<T> | null;
 

@@ -21,6 +21,7 @@ import { ProductGrid } from './ProductGrid';
 import { ProductPagination } from './ProductPagination';
 import { ProductBulkActions } from './ProductBulkActions';
 import { getCsrfToken } from '@/lib/csrf';
+import { getAccessToken } from '@/features/auth/services/auth.service';
 
 export function ProductCatalog() {
   const router = useRouter();
@@ -235,9 +236,13 @@ export function ProductCatalog() {
       // For delete, we call the backend delete via a direct fetch.
       const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
       const csrfToken = await getCsrfToken();
+      const authToken = getAccessToken();
       const res = await fetch(`${API_URL}/admin/products/${id}`, {
         method: 'DELETE',
-        headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+        headers: {
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+        },
         credentials: 'include',
         cache: 'no-store',
       });
@@ -315,12 +320,16 @@ export function ProductCatalog() {
     setDeleting((prev) => new Set([...prev, ...ids]));
     try {
       const csrfToken = await getCsrfToken();
+      const authToken = getAccessToken();
       const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
       await Promise.all(
         ids.map((id) =>
           fetch(`${apiUrl}/admin/products/${id}`, {
             method: 'DELETE',
-            headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+            headers: {
+              ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+              ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+            },
             credentials: 'include',
             cache: 'no-store',
           }),
