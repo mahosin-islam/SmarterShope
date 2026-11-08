@@ -6,6 +6,7 @@ import type {
   CreatedProduct,
   StoreSettings,
 } from '../types';
+import { getCsrfToken } from '@/lib/csrf';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
 
@@ -50,12 +51,21 @@ function parseFieldErrors(details: unknown): ApiFieldError[] {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  if (options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method)) {
+    const token = await getCsrfToken();
+    if (token) {
+      headers['X-CSRF-Token'] = token;
+    }
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers
-    },
+    headers,
     credentials: 'include',
     cache: 'no-store'
   });

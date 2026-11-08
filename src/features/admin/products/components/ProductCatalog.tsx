@@ -20,6 +20,7 @@ import { ProductTable } from './ProductTable';
 import { ProductGrid } from './ProductGrid';
 import { ProductPagination } from './ProductPagination';
 import { ProductBulkActions } from './ProductBulkActions';
+import { getCsrfToken } from '@/lib/csrf';
 
 export function ProductCatalog() {
   const router = useRouter();
@@ -233,8 +234,10 @@ export function ProductCatalog() {
       // The backend DELETE endpoint archives the product. Use bulk-status for deactivate instead.
       // For delete, we call the backend delete via a direct fetch.
       const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
+      const csrfToken = await getCsrfToken();
       const res = await fetch(`${API_URL}/admin/products/${id}`, {
         method: 'DELETE',
+        headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
         credentials: 'include',
         cache: 'no-store',
       });
@@ -311,11 +314,13 @@ export function ProductCatalog() {
       return;
     setDeleting((prev) => new Set([...prev, ...ids]));
     try {
-      // Archive each product individually via DELETE
+      const csrfToken = await getCsrfToken();
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
       await Promise.all(
         ids.map((id) =>
-          fetch(`${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '')}/admin/products/${id}`, {
+          fetch(`${apiUrl}/admin/products/${id}`, {
             method: 'DELETE',
+            headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
             credentials: 'include',
             cache: 'no-store',
           }),

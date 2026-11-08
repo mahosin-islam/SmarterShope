@@ -80,7 +80,7 @@ export function GoogleOneTap() {
         }
       }
     },
-    [setUser, router, switchTab, openAuthModal]
+    [setUser, router, switchTab, openAuthModal, addAccount]
   );
 
   // Initialize Google One Tap exactly once. Only initialize — do NOT auto-call prompt()

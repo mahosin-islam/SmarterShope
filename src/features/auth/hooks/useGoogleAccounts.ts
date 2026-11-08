@@ -19,7 +19,8 @@ export function useGoogleAccounts() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        setAccounts(JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        queueMicrotask(() => setAccounts(parsed));
       }
     } catch {
       // Ignore parse errors
