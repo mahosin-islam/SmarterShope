@@ -4,7 +4,6 @@ import { Navbar } from '@/components/shared/Navbar';
 import { HeroSection } from '@/features/store/home/components/HeroSection';
 import { TickerStrip } from '@/features/store/home/components/TickerStrip';
 import { CuratedArchives, CuratedArchivesSkeleton } from '@/features/store/home/components/CuratedArchives';
-import { FeaturedCollection, FeaturedCollectionSkeleton } from '@/features/store/home/components/FeaturedCollection';
 import { EditorialBanner } from '@/features/store/home/components/EditorialBanner';
 import { NewArrivalsSection, NewArrivalsSkeleton } from '@/features/store/home/components/NewArrivalsSection';
 import { EditorialQuote } from '@/features/store/home/components/EditorialQuote';
@@ -34,12 +33,7 @@ export default function HomePage() {
           <CuratedArchives />
         </Suspense>
 
-        {/* 6. Featured Collection */}
-        <Suspense fallback={<FeaturedCollectionSkeleton />}>
-          <FeaturedCollection />
-        </Suspense>
-
-        {/* 7. Mid-Page Editorial Feature & Value Props */}
+        {/* 6. Mid-Page Editorial Feature & Value Props */}
         <EditorialBanner />
 
         {/* 8. New Arrivals Drop 01 */}
