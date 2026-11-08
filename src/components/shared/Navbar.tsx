@@ -2,20 +2,22 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Menu, Search, X, Heart, ShoppingBag, User, LayoutDashboard, LogOut, ChevronDown, Mail } from 'lucide-react';
 import { useAuth } from '@/features/auth/contexts/authContext';
 import { useAuthModal } from '@/features/auth/contexts/authModal.context';
 import { useGoogleAccounts } from '@/features/auth/hooks/useGoogleAccounts';
 
 const NAV_LINKS = [
-  { label: 'Tailoring', href: '/products?category=tailoring' },
-  { label: 'Knitwear', href: '/products?category=knitwear' },
-  { label: 'Footwear', href: '/products?category=footwear' },
-  { label: 'Bags', href: '/products?category=bags' },
-  { label: 'Accessories', href: '/products?category=accessories' },
+  { label: 'Shop All', href: '/products' },
+  { label: 'Categories', href: '/categories' },
+  { label: 'Brands', href: '/brands' },
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 export const Navbar: React.FC = () => {
+  const router = useRouter();
   const { user, isLoading, logout } = useAuth();
   const { openAuthModal } = useAuthModal();
   const { accounts: googleAccounts } = useGoogleAccounts();
@@ -209,7 +211,15 @@ export const Navbar: React.FC = () => {
 
       {/* Integrated Search Input Row */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-3">
-        <div className="relative flex items-center">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (searchQuery.trim()) {
+              router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+            }
+          }}
+          className="relative flex items-center"
+        >
           <Search className="absolute left-3 w-4 h-4 text-neutral-400 pointer-events-none" />
           <input
             type="text"
@@ -228,7 +238,7 @@ export const Navbar: React.FC = () => {
               <X className="w-4 h-4" />
             </button>
           )}
-        </div>
+        </form>
       </div>
 
       {/* Mobile Drawer Menu */}

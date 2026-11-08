@@ -2,9 +2,11 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
-import { CURATED_ARCHIVES } from '@/features/store/home/data/mock-landing-data';
+import { storeService } from '@/features/store/services/store.service';
 
-export const CuratedArchives: React.FC = () => {
+export const CuratedArchives: React.FC = async () => {
+  const categories = await storeService.getCategories();
+
   return (
     <section className="py-8 sm:py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,14 +25,14 @@ export const CuratedArchives: React.FC = () => {
             href="/categories"
             className="flex items-center space-x-1 text-xs font-bold text-[#ff4600] hover:text-[#e03e00] tracking-wider uppercase transition-colors"
           >
-            <span>ALL (16)</span>
+            <span>ALL ({categories.length})</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {/* Categories Strip */}
         <div className="flex items-start space-x-4 sm:space-x-6 overflow-x-auto no-scrollbar pb-2">
-          {CURATED_ARCHIVES.map((cat) => (
+          {categories.map((cat) => (
             <Link
               key={cat.id}
               href={`/products?category=${cat.slug}`}
@@ -45,7 +47,7 @@ export const CuratedArchives: React.FC = () => {
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <span className="mt-2 text-xs font-medium text-neutral-800 group-hover:text-[#ff4600] transition-colors">
+              <span className="mt-2 text-xs font-medium text-neutral-800 group-hover:text-[#ff4600] transition-colors truncate max-w-full px-1">
                 {cat.name}
               </span>
             </Link>

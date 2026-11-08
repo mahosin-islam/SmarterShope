@@ -2,9 +2,11 @@ import React from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { ProductCard } from '@/features/store/products/components/ProductCard';
-import { FEATURED_PRODUCTS } from '@/features/store/home/data/mock-landing-data';
+import { storeService } from '@/features/store/services/store.service';
 
-export const FeaturedCollection: React.FC = () => {
+export const FeaturedCollection: React.FC = async () => {
+  const products = await storeService.getFeaturedProducts();
+
   return (
     <section className="py-8 sm:py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -26,14 +28,14 @@ export const FeaturedCollection: React.FC = () => {
             href="/products?featured=true"
             className="hidden sm:flex items-center space-x-1 text-xs font-bold text-[#ff4600] hover:text-[#e03e00] tracking-wider uppercase transition-colors shrink-0 ml-4"
           >
-            <span>VIEW ALL (48)</span>
+            <span>VIEW ALL ({products.length})</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {/* 2-col on Mobile, 4-col on Desktop Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          {FEATURED_PRODUCTS.map((product) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -44,7 +46,7 @@ export const FeaturedCollection: React.FC = () => {
             href="/products?featured=true"
             className="inline-flex items-center space-x-1 text-xs font-bold text-[#ff4600] tracking-wider uppercase"
           >
-            <span>VIEW ALL (48)</span>
+            <span>VIEW ALL ({products.length})</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
