@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { AnnouncementBar } from '@/components/shared/AnnouncementBar';
 import { Navbar } from '@/components/shared/Navbar';
 import { HeroSection } from '@/features/store/home/components/HeroSection';
 import { TickerStrip } from '@/features/store/home/components/TickerStrip';
-import { CuratedArchives } from '@/features/store/home/components/CuratedArchives';
-import { FeaturedCollection } from '@/features/store/home/components/FeaturedCollection';
+import { CuratedArchives, CuratedArchivesSkeleton } from '@/features/store/home/components/CuratedArchives';
+import { FeaturedCollection, FeaturedCollectionSkeleton } from '@/features/store/home/components/FeaturedCollection';
 import { EditorialBanner } from '@/features/store/home/components/EditorialBanner';
-import { NewArrivalsSection } from '@/features/store/home/components/NewArrivalsSection';
+import { NewArrivalsSection, NewArrivalsSkeleton } from '@/features/store/home/components/NewArrivalsSection';
 import { EditorialQuote } from '@/features/store/home/components/EditorialQuote';
 import { BrandManifesto } from '@/features/store/home/components/BrandManifesto';
 import { AtelierNewsletter } from '@/features/store/home/components/AtelierNewsletter';
@@ -30,16 +30,22 @@ export default function HomePage() {
         <TickerStrip />
 
         {/* 5. Curated Archives Categories */}
-        <CuratedArchives />
+        <Suspense fallback={<CuratedArchivesSkeleton />}>
+          <CuratedArchives />
+        </Suspense>
 
         {/* 6. Featured Collection */}
-        <FeaturedCollection />
+        <Suspense fallback={<FeaturedCollectionSkeleton />}>
+          <FeaturedCollection />
+        </Suspense>
 
         {/* 7. Mid-Page Editorial Feature & Value Props */}
         <EditorialBanner />
 
         {/* 8. New Arrivals Drop 01 */}
-        <NewArrivalsSection />
+        <Suspense fallback={<NewArrivalsSkeleton />}>
+          <NewArrivalsSection />
+        </Suspense>
 
         {/* 9. Editorial Testimonial Quote */}
         <EditorialQuote />
@@ -54,7 +60,7 @@ export default function HomePage() {
       {/* 12. Main Footer */}
       <Footer />
 
-      {/* 13. Mobile Bottom Navigation (fixed on small viewports) */}
+      {/* 13. Mobile Bottom Navigation */}
       <MobileBottomNav />
     </div>
   );

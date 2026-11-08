@@ -4,8 +4,27 @@ import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
 import { storeService } from '@/features/store/services/store.service';
 
+export const CuratedArchivesSkeleton: React.FC = () => (
+  <div className="py-8 sm:py-12 bg-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-pulse">
+    <div className="h-6 w-48 bg-neutral-200 rounded mb-2" />
+    <div className="h-4 w-64 bg-neutral-100 rounded mb-6" />
+    <div className="flex space-x-4 overflow-hidden">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="w-24 sm:w-28 shrink-0 flex flex-col items-center">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-neutral-100" />
+          <div className="mt-2 h-3 w-16 bg-neutral-100 rounded" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 export const CuratedArchives: React.FC = async () => {
   const categories = await storeService.getCategories();
+
+  if (!categories || categories.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-8 sm:py-12 bg-white">

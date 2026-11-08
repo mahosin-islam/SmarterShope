@@ -4,8 +4,24 @@ import { ChevronRight } from 'lucide-react';
 import { ProductCard } from '@/features/store/products/components/ProductCard';
 import { storeService } from '@/features/store/services/store.service';
 
+export const FeaturedCollectionSkeleton: React.FC = () => (
+  <div className="py-8 sm:py-12 bg-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-pulse">
+    <div className="h-4 w-32 bg-neutral-200 rounded mb-2" />
+    <div className="h-8 w-64 bg-neutral-200 rounded mb-6" />
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="aspect-[4/5] bg-neutral-100 rounded-xl" />
+      ))}
+    </div>
+  </div>
+);
+
 export const FeaturedCollection: React.FC = async () => {
   const products = await storeService.getFeaturedProducts();
+
+  if (!products || products.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-8 sm:py-12 bg-white">
