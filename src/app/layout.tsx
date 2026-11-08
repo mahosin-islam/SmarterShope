@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -35,7 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* AuthModal rendered at root so it works on every page */}
             <AuthModal />
             {/* Google One Tap prompt for visitors */}
-            <GoogleOneTap />
+            <Suspense fallback={null}>
+              <GoogleOneTap />
+            </Suspense>
           </AuthModalProvider>
         </AuthProvider>
       </body>

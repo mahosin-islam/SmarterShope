@@ -2,7 +2,7 @@
 
 // AccountSidebar — sidebar for the customer account section.
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, User, ShoppingBag, MapPin, Heart, LogOut } from 'lucide-react';
@@ -16,8 +16,8 @@ const NAV_ITEMS = [
   { href: '/account/wishlist', label: 'Wishlist', icon: Heart },
 ];
 
-export function AccountSidebar() {
-  const pathname = usePathname();
+function AccountSidebarContent() {
+  const pathname = usePathname() || '';
   const { logout, user } = useAuth();
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'My Account';
 
@@ -65,5 +65,20 @@ export function AccountSidebar() {
         </button>
       </div>
     </aside>
+  );
+}
+
+export function AccountSidebar() {
+  return (
+    <Suspense
+      fallback={
+        <aside className="w-full md:w-56 flex-shrink-0 animate-pulse">
+          <div className="h-20 bg-neutral-100 rounded-xl mb-3" />
+          <div className="h-48 bg-neutral-100 rounded-xl" />
+        </aside>
+      }
+    >
+      <AccountSidebarContent />
+    </Suspense>
   );
 }
