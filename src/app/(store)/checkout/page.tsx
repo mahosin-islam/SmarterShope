@@ -49,7 +49,7 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState('');
   const [detailedAddress, setDetailedAddress] = useState('');
 
-  // Auto-fill user details if logged in
+  // Auto-fill user details if logged in or from saved addresses
   useEffect(() => {
     if (user) {
       if (!fullName) {
@@ -59,6 +59,24 @@ export default function CheckoutPage() {
       if (!email && user.email) {
         setEmail(user.email);
       }
+    }
+
+    try {
+      const addrRaw = localStorage.getItem('modora_saved_addresses');
+      if (addrRaw) {
+        const addrs = JSON.parse(addrRaw);
+        const def = addrs.find((a: any) => a.isDefault) || addrs[0];
+        if (def) {
+          if (!fullName && def.recipientName) setFullName(def.recipientName);
+          if (!phone && def.phone) setPhone(def.phone);
+          if (!detailedAddress && def.detailedAddress) setDetailedAddress(def.detailedAddress);
+          if (!selectedDivisionId && def.divisionId) setSelectedDivisionId(def.divisionId);
+          if (!selectedDistrictId && def.districtId) setSelectedDistrictId(def.districtId);
+          if (!selectedUpazilaId && def.upazilaId) setSelectedUpazilaId(def.upazilaId);
+        }
+      }
+    } catch {
+      //
     }
   }, [user]);
 
@@ -240,6 +258,39 @@ export default function CheckoutPage() {
     }
 
     setPlacedOrderNumber(orderNo);
+
+    // Save order record locally for immediate customer dashboard reflection
+    try {
+      const newOrderRecord = {
+        id: orderNo,
+        orderNumber: orderNo,
+        status: 'PENDING',
+        subtotal: subtotal,
+        shippingAmount: shippingFee,
+        totalAmount: finalTotal,
+        createdAt: new Date().toISOString(),
+        items: cartItems.map((item) => ({
+          id: `${item.productId}-${Date.now()}`,
+          productTitle: item.title,
+          variantTitle: item.variantTitle,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          total: item.price * item.quantity,
+        })),
+        shippingAddress: {
+          address: detailedAddress,
+          altPhone,
+          deliveryNote,
+        },
+      };
+
+      const existingOrdersRaw = localStorage.getItem('modora_customer_orders');
+      const existingOrders = existingOrdersRaw ? JSON.parse(existingOrdersRaw) : [];
+      existingOrders.unshift(newOrderRecord);
+      localStorage.setItem('modora_customer_orders', JSON.stringify(existingOrders));
+    } catch {
+      //
+    }
 
     // Clear cart in local storage
     try {
