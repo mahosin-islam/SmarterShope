@@ -3,11 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { AnnouncementBar } from '@/components/shared/AnnouncementBar';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import { MobileBottomNav } from '@/components/shared/MobileBottomNav';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package } from 'lucide-react';
+import { useAuth } from '@/features/auth/contexts/authContext';
+import { useAuthModal } from '@/features/auth/contexts/authModal.context';
 
 interface CartItem {
   productId: string;
@@ -20,6 +23,9 @@ interface CartItem {
 }
 
 export default function CartPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -196,10 +202,10 @@ export default function CartPage() {
                       {/* Item Total */}
                       <div className="text-right">
                         <span className="font-bold text-sm text-neutral-900">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ৳{(item.price * item.quantity).toFixed(0)}
                         </span>
                         <span className="text-[11px] text-neutral-400 block">
-                          ${item.price.toFixed(2)} each
+                          ৳{item.price.toFixed(0)} each
                         </span>
                       </div>
                     </div>
@@ -228,17 +234,17 @@ export default function CartPage() {
                 <div className="space-y-3 text-xs sm:text-sm border-b border-[#e8e6e3] pb-4 mb-4">
                   <div className="flex justify-between text-neutral-600">
                     <span>Subtotal ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
-                    <span className="font-semibold text-neutral-900">${subtotal.toFixed(2)}</span>
+                    <span className="font-semibold text-neutral-900">৳{subtotal.toFixed(0)}</span>
                   </div>
                   <div className="flex justify-between text-neutral-600">
                     <span>Atelier Courier</span>
                     <span className={shipping === 0 ? 'text-green-600 font-semibold' : 'font-semibold text-neutral-900'}>
-                      {shipping === 0 ? 'Complimentary' : `$${shipping.toFixed(2)}`}
+                      {shipping === 0 ? 'Complimentary' : `৳${shipping.toFixed(0)}`}
                     </span>
                   </div>
                   {shipping > 0 && (
                     <p className="text-[11px] text-neutral-400">
-                      Free courier on orders over $300.00
+                      Free courier on orders over ৳300
                     </p>
                   )}
                   <div className="flex justify-between text-neutral-600">
@@ -250,16 +256,23 @@ export default function CartPage() {
                 <div className="flex justify-between items-baseline mb-6">
                   <span className="font-bold text-sm uppercase tracking-wider text-neutral-900">Total</span>
                   <span className="font-editorial text-2xl font-bold text-[#ff4600]">
-                    ${total.toFixed(2)}
+                    ৳{total.toFixed(0)}
                   </span>
                 </div>
 
-                <Link
-                  href="/checkout"
-                  className="block w-full text-center bg-[#ff4600] hover:bg-[#e03e00] text-white text-xs font-bold uppercase tracking-wider py-4 rounded-xl shadow-md hover:shadow-orange-600/30 transition-all"
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) {
+                      openAuthModal('login');
+                      return;
+                    }
+                    router.push('/checkout');
+                  }}
+                  className="block w-full text-center bg-[#ff4600] hover:bg-[#e03e00] text-white text-xs font-bold uppercase tracking-wider py-4 rounded-xl shadow-md hover:shadow-orange-600/30 transition-all focus:outline-none"
                 >
                   Proceed to Checkout &rarr;
-                </Link>
+                </button>
 
                 {/* Trust Badges */}
                 <div className="mt-5 flex items-center justify-center space-x-4 text-[11px] text-neutral-400">

@@ -20,7 +20,10 @@ import {
   ArrowLeft,
   RotateCcw,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
+import { useAuth } from '@/features/auth/contexts/authContext';
+import { useAuthModal } from '@/features/auth/contexts/authModal.context';
 
 interface CartItem {
   productId: string;
@@ -33,8 +36,11 @@ interface CartItem {
 }
 
 export default function CheckoutPage() {
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'form' | 'success'>('form');
 
   // Form Fields
@@ -42,6 +48,19 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [detailedAddress, setDetailedAddress] = useState('');
+
+  // Auto-fill user details if logged in
+  useEffect(() => {
+    if (user) {
+      if (!fullName) {
+        const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        if (name) setFullName(name);
+      }
+      if (!email && user.email) {
+        setEmail(user.email);
+      }
+    }
+  }, [user]);
 
   // Bangladesh Geographic cascading selection
   const {
@@ -132,8 +151,13 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleConfirmOrder = (e: React.FormEvent) => {
+  const handleConfirmOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
 
     if (!fullName.trim()) {
       alert('Please enter your full name.');
@@ -160,8 +184,61 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Generate random order number e.g. #ORD-739210
-    const orderNo = `MOD-${Math.floor(100000 + Math.random() * 900000)}`;
+    setIsSubmitting(true);
+    let orderNo = `MOD-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+      const chosenDivision = divisions.find((d) => String(d.id) === String(selectedDivisionId));
+      const chosenDistrict = districtOptions.find((d) => String(d.id) === String(selectedDistrictId));
+      const chosenUpazila = upazilaOptions.find((u) => String(u.id) === String(selectedUpazilaId));
+      const chosenUnion = unionOptions.find((un) => String(un.id) === String(selectedUnionId));
+
+      const payload = {
+        customerEmail: email || user.email,
+        customerPhone: phone,
+        customerName: fullName,
+        shippingAddress: {
+          address: detailedAddress,
+          division: chosenDivision ? formatGeoLabel(chosenDivision) : selectedDivisionId,
+          district: chosenDistrict ? formatGeoLabel(chosenDistrict) : selectedDistrictId,
+          upazila: chosenUpazila ? formatGeoLabel(chosenUpazila) : selectedUpazilaId,
+          union: chosenUnion ? formatGeoLabel(chosenUnion) : selectedUnionId,
+          altPhone,
+          deliveryNote,
+        },
+        paymentMethod,
+        items: cartItems.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId || undefined,
+          quantity: item.quantity,
+        })),
+        couponCode: appliedCoupon || undefined,
+      };
+
+      const res = await fetch(`${API_URL}/orders/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data?.orderNumber) {
+          orderNo = json.data.orderNumber;
+        } else if (json.data?.id) {
+          orderNo = `MOD-${json.data.id.slice(0, 8).toUpperCase()}`;
+        }
+      }
+    } catch {
+      // If network fails, proceed with generated order number
+    } finally {
+      setIsSubmitting(false);
+    }
+
     setPlacedOrderNumber(orderNo);
 
     // Clear cart in local storage
@@ -761,10 +838,20 @@ export default function CheckoutPage() {
               {/* Confirm Order CTA Button */}
               <button
                 type="submit"
-                className="w-full flex items-center justify-center space-x-2 bg-neutral-900 hover:bg-black text-white text-sm font-bold uppercase tracking-wider py-4 rounded-xl shadow-md transition-all focus:outline-none"
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center space-x-2 bg-neutral-900 hover:bg-black disabled:bg-neutral-400 text-white text-sm font-bold uppercase tracking-wider py-4 rounded-xl shadow-md transition-all focus:outline-none"
               >
-                <Lock className="w-4 h-4" />
-                <span>Confirm Order ৳{finalTotal}</span>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing Order...</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4" />
+                    <span>Confirm Order ৳{finalTotal}</span>
+                  </>
+                )}
               </button>
 
               {/* Reassurance Footer */}

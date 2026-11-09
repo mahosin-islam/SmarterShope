@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Heart, Check, ShieldCheck, Truck, RefreshCw, Ruler } from 'lucide-react';
 import { BackendProduct } from '@/features/store/services/store.service';
+import { useAuth } from '@/features/auth/contexts/authContext';
+import { useAuthModal } from '@/features/auth/contexts/authModal.context';
 
 interface ProductDetailInteractiveProps {
   product: BackendProduct;
@@ -14,6 +16,8 @@ const DEFAULT_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 
 export const ProductDetailInteractive: React.FC<ProductDetailInteractiveProps> = ({ product }) => {
   const router = useRouter();
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
 
   const images = product.images && product.images.length > 0
     ? product.images.map((img) => img.url)
@@ -33,6 +37,21 @@ export const ProductDetailInteractive: React.FC<ProductDetailInteractiveProps> =
   const [addedSuccess, setAddedSuccess] = useState(false);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
 
+  // Sync wishlist status
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('modora_wishlist');
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          setIsWishlisted(list.some((p: { id: string }) => p.id === product.id));
+        }
+      }
+    } catch {
+      //
+    }
+  }, [product.id]);
+
   const basePrice = Number(product.basePrice) || 0;
   const comparePrice = product.comparePrice ? Number(product.comparePrice) : null;
   const discountPercent = comparePrice && comparePrice > basePrice
@@ -49,7 +68,6 @@ export const ProductDetailInteractive: React.FC<ProductDetailInteractiveProps> =
     try {
       const existing = localStorage.getItem('modora_cart');
       const cartItems = existing ? JSON.parse(existing) : [];
-      const itemKey = `${product.id}-${activeSizeTitle}`;
 
       const itemIndex = cartItems.findIndex(
         (i: { productId: string; variantTitle?: string }) =>
@@ -77,14 +95,52 @@ export const ProductDetailInteractive: React.FC<ProductDetailInteractiveProps> =
   };
 
   const handleAddToCart = () => {
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
     saveToCart();
     setAddedSuccess(true);
     setTimeout(() => setAddedSuccess(false), 2500);
   };
 
   const handleBuyNow = () => {
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
     saveToCart();
     router.push('/checkout');
+  };
+
+  const handleWishlistToggle = () => {
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+    try {
+      const raw = localStorage.getItem('modora_wishlist');
+      let list: Array<{ id: string; title: string; imageUrl: string; basePrice: number; slug: string }> = raw
+        ? JSON.parse(raw)
+        : [];
+      if (isWishlisted) {
+        list = list.filter((p) => p.id !== product.id);
+        setIsWishlisted(false);
+      } else {
+        list.push({
+          id: product.id,
+          title: product.title,
+          imageUrl: images[0],
+          basePrice: activePrice,
+          slug: product.slug,
+        });
+        setIsWishlisted(true);
+      }
+      localStorage.setItem('modora_wishlist', JSON.stringify(list));
+      window.dispatchEvent(new Event('wishlist_updated'));
+    } catch {
+      // Ignore
+    }
   };
 
   return (
@@ -301,7 +357,7 @@ export const ProductDetailInteractive: React.FC<ProductDetailInteractiveProps> =
             {/* Wishlist Icon */}
             <button
               type="button"
-              onClick={() => setIsWishlisted(!isWishlisted)}
+              onClick={handleWishlistToggle}
               className={`p-3.5 rounded-lg border transition-colors shrink-0 ${
                 isWishlisted
                   ? 'border-[#ff4600] bg-[#fff3ec] text-[#ff4600]'

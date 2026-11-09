@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Star, Eye } from 'lucide-react';
+import { Heart, Star, Eye, Check } from 'lucide-react';
 import { StoreProduct } from '@/types/store';
+import { useAuth } from '@/features/auth/contexts/authContext';
+import { useAuthModal } from '@/features/auth/contexts/authModal.context';
 
 interface ProductCardProps {
   product: StoreProduct;
@@ -17,7 +19,95 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onQuickView,
   onAddToCart,
 }) => {
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [addedSuccess, setAddedSuccess] = useState(false);
+
+  // Check if item is already in wishlist
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('modora_wishlist');
+      if (raw) {
+        const list: StoreProduct[] = JSON.parse(raw);
+        setIsWishlisted(list.some((p) => p.id === product.id));
+      }
+    } catch {
+      // Ignore
+    }
+  }, [product.id]);
+
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Must be logged in to wishlist
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+
+    try {
+      const raw = localStorage.getItem('modora_wishlist');
+      let list: StoreProduct[] = raw ? JSON.parse(raw) : [];
+
+      if (isWishlisted) {
+        list = list.filter((p) => p.id !== product.id);
+        setIsWishlisted(false);
+      } else {
+        list.push(product);
+        setIsWishlisted(true);
+      }
+
+      localStorage.setItem('modora_wishlist', JSON.stringify(list));
+      window.dispatchEvent(new Event('wishlist_updated'));
+    } catch {
+      // Ignore
+    }
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Must be logged in to add to cart
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+
+    try {
+      const existing = localStorage.getItem('modora_cart');
+      const cartItems = existing ? JSON.parse(existing) : [];
+
+      const itemIndex = cartItems.findIndex(
+        (i: { productId: string; variantTitle?: string }) => i.productId === product.id
+      );
+
+      if (itemIndex > -1) {
+        cartItems[itemIndex].quantity += 1;
+      } else {
+        cartItems.push({
+          productId: product.id,
+          variantTitle: 'M',
+          title: product.title,
+          price: product.basePrice,
+          imageUrl: product.imageUrl,
+          quantity: 1,
+        });
+      }
+
+      localStorage.setItem('modora_cart', JSON.stringify(cartItems));
+      window.dispatchEvent(new Event('cart_updated'));
+
+      setAddedSuccess(true);
+      setTimeout(() => setAddedSuccess(false), 2000);
+
+      onAddToCart?.(product);
+    } catch {
+      // Ignore
+    }
+  };
 
   const getBadgeClasses = (variant: 'discount' | 'restocked' | 'new') => {
     switch (variant) {
@@ -36,7 +126,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     <div className="group relative flex flex-col bg-white border border-[#e8e6e3] rounded-xl overflow-hidden hover:shadow-md transition-all duration-300">
       {/* Product Image Frame */}
       <div className="relative aspect-[4/5] w-full bg-neutral-100 overflow-hidden">
-          <Link href={`/products/${product.slug}`} className="relative block w-full h-full">
+        <Link href={`/products/${product.slug}`} className="relative block w-full h-full">
           <Image
             src={product.imageUrl}
             alt={product.title}
@@ -62,15 +152,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Top Right Wishlist Button */}
         <button
           type="button"
-          onClick={() => setIsWishlisted(!isWishlisted)}
+          onClick={handleWishlistClick}
           className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-neutral-700 hover:text-[#ff4600] hover:bg-white shadow-xs transition-colors"
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart
             className={`w-4 h-4 transition-colors ${
-              isWishlisted
-                ? 'fill-[#ff4600] text-[#ff4600]'
-                : 'stroke-[1.8]'
+              isWishlisted ? 'fill-[#ff4600] text-[#ff4600]' : 'stroke-[1.8]'
             }`}
           />
         </button>
@@ -106,14 +194,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <span className="text-neutral-400">({product.reviewCount})</span>
         </div>
 
-        {/* Price Row */}
+        {/* Price Row in BDT (৳) */}
         <div className="flex items-baseline space-x-2 mb-3.5 mt-auto">
           <span className="text-sm sm:text-base font-bold text-[#ff4600]">
-            ${product.basePrice.toFixed(2)}
+            ৳{product.basePrice.toFixed(0)}
           </span>
           {product.comparePrice && (
             <span className="text-xs text-neutral-400 line-through">
-              ${product.comparePrice.toFixed(2)}
+              ৳{product.comparePrice.toFixed(0)}
             </span>
           )}
         </div>
@@ -122,19 +210,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex items-center space-x-2 pt-1 border-t border-[#f0eeed]">
           <button
             type="button"
-            onClick={() => onAddToCart?.(product)}
-            className="flex-1 bg-[#ff4600] hover:bg-[#e03e00] text-white font-bold text-[10px] sm:text-xs tracking-wider uppercase py-2.5 px-3 rounded text-center transition-colors shadow-xs"
+            onClick={handleAddToCart}
+            className={`flex-1 font-bold text-[10px] sm:text-xs tracking-wider uppercase py-2.5 px-3 rounded text-center transition-all shadow-xs flex items-center justify-center space-x-1 ${
+              addedSuccess
+                ? 'bg-green-600 text-white'
+                : 'bg-[#ff4600] hover:bg-[#e03e00] text-white'
+            }`}
           >
-            ADD TO BAG
+            {addedSuccess ? (
+              <>
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>ADDED</span>
+              </>
+            ) : (
+              <span>ADD TO BAG</span>
+            )}
           </button>
-          <button
-            type="button"
-            onClick={() => onQuickView?.(product)}
+          <Link
+            href={`/products/${product.slug}`}
             className="p-2 border border-[#e8e6e3] rounded text-neutral-600 hover:text-black hover:border-neutral-400 transition-colors"
-            aria-label={`Quick view ${product.title}`}
+            aria-label={`View ${product.title}`}
           >
             <Eye className="w-4 h-4 stroke-[1.8]" />
-          </button>
+          </Link>
         </div>
       </div>
     </div>

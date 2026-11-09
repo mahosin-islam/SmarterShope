@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Menu, Search, X, Heart, ShoppingBag, User, LayoutDashboard, LogOut, ChevronDown, Mail } from 'lucide-react';
@@ -24,6 +24,45 @@ export const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  useEffect(() => {
+    const updateCounts = () => {
+      try {
+        const cartRaw = localStorage.getItem('modora_cart');
+        if (cartRaw) {
+          const items = JSON.parse(cartRaw);
+          const total = items.reduce(
+            (sum: number, i: { quantity?: number }) => sum + (i.quantity || 1),
+            0
+          );
+          setCartCount(total);
+        } else {
+          setCartCount(0);
+        }
+
+        const wishRaw = localStorage.getItem('modora_wishlist');
+        if (wishRaw) {
+          const list = JSON.parse(wishRaw);
+          setWishlistCount(Array.isArray(list) ? list.length : 0);
+        } else {
+          setWishlistCount(0);
+        }
+      } catch {
+        setCartCount(0);
+        setWishlistCount(0);
+      }
+    };
+
+    updateCounts();
+    window.addEventListener('cart_updated', updateCounts);
+    window.addEventListener('wishlist_updated', updateCounts);
+    return () => {
+      window.removeEventListener('cart_updated', updateCounts);
+      window.removeEventListener('wishlist_updated', updateCounts);
+    };
+  }, []);
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'STAFF';
   const displayName = user?.firstName ?? user?.email?.split('@')[0] ?? 'Account';
@@ -70,27 +109,44 @@ export const Navbar: React.FC = () => {
 
         {/* Right: Actions */}
         <div className="flex items-center space-x-1 sm:space-x-2">
-          {/* Wishlist — only for authenticated customers */}
-          {user && !isAdmin && (
+          {/* Wishlist Icon — Always visible */}
+          {user ? (
             <Link
               href="/account/wishlist"
               className="relative p-1.5 text-neutral-800 hover:text-[#ff4600] transition-colors"
               aria-label="Wishlist"
             >
               <Heart className="w-5 h-5 stroke-[1.8]" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#ff4600] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in-50">
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openAuthModal('login')}
+              className="relative p-1.5 text-neutral-800 hover:text-[#ff4600] transition-colors focus:outline-none"
+              aria-label="Wishlist (sign in required)"
+            >
+              <Heart className="w-5 h-5 stroke-[1.8]" />
+            </button>
           )}
 
-          {/* Cart — only for customers */}
-          {!isAdmin && (
-            <Link
-              href="/cart"
-              className="relative p-1.5 text-neutral-800 hover:text-[#ff4600] transition-colors"
-              aria-label="Cart"
-            >
-              <ShoppingBag className="w-5 h-5 stroke-[1.8]" />
-            </Link>
-          )}
+          {/* Cart Icon — ALWAYS visible for all visitors, customers, and admins */}
+          <Link
+            href="/cart"
+            className="relative p-1.5 text-neutral-800 hover:text-[#ff4600] transition-colors"
+            aria-label="Cart"
+          >
+            <ShoppingBag className="w-5 h-5 stroke-[1.8]" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#ff4600] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs animate-in zoom-in-50">
+                {cartCount}
+              </span>
+            )}
+          </Link>
 
           {/* Auth area */}
           {isLoading ? (
