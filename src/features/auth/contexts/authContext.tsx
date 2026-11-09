@@ -118,10 +118,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async (): Promise<void> => {
     try {
+      if (typeof window !== 'undefined' && (window as unknown as { google?: { accounts?: { id?: { disableAutoSelect?: () => void } } } })?.google?.accounts?.id?.disableAutoSelect) {
+        (window as unknown as { google: { accounts: { id: { disableAutoSelect: () => void } } } }).google.accounts.id.disableAutoSelect();
+      }
       await authService.logout();
     } catch {
       // Continue with local logout even if server call fails
     }
+    clearAuthCookies();
     setUser(null);
   }, []);
 

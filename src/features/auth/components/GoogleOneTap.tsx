@@ -32,6 +32,7 @@ declare global {
             }) => void
           ) => void;
           cancel: () => void;
+          disableAutoSelect: () => void;
         };
       };
     };

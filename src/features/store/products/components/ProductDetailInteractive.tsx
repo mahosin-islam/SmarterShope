@@ -144,27 +144,27 @@ export const ProductDetailInteractive: React.FC<ProductDetailInteractiveProps> =
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
       {/* Left: Product Images Gallery */}
-      <div className="lg:col-span-7 flex flex-col-reverse sm:flex-row gap-4">
+      <div className="lg:col-span-6 flex flex-col-reverse sm:flex-row gap-3.5">
         {/* Thumbnails (desktop left / mobile bottom) */}
         {images.length > 1 && (
-          <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto max-h-[580px] shrink-0 no-scrollbar">
+          <div className="flex sm:flex-col gap-2.5 overflow-x-auto sm:overflow-y-auto max-h-[460px] shrink-0 no-scrollbar">
             {images.map((img, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => setActiveImageIndex(idx)}
-                className={`relative w-16 h-20 sm:w-20 sm:h-24 rounded-lg overflow-hidden border-2 transition-all ${
-                  activeImageIndex === idx ? 'border-[#ff4600] opacity-100' : 'border-neutral-200 opacity-60 hover:opacity-100'
+                className={`relative w-14 h-16 sm:w-16 sm:h-20 rounded-lg overflow-hidden border-2 transition-all bg-[#faf9f6] ${
+                  activeImageIndex === idx ? 'border-[#ff4600] opacity-100 ring-1 ring-[#ff4600]' : 'border-neutral-200 opacity-60 hover:opacity-100'
                 }`}
               >
                 <Image
                   src={img}
                   alt={`${product.title} view ${idx + 1}`}
                   fill
-                  sizes="80px"
-                  className="object-cover"
+                  sizes="64px"
+                  className="object-contain p-1"
                 />
               </button>
             ))}
@@ -172,14 +172,14 @@ export const ProductDetailInteractive: React.FC<ProductDetailInteractiveProps> =
         )}
 
         {/* Main Display Image */}
-        <div className="relative flex-1 aspect-[4/5] bg-neutral-100 rounded-2xl overflow-hidden border border-[#e8e6e3]">
+        <div className="relative flex-1 aspect-square sm:aspect-[4/5] max-h-[480px] bg-[#faf9f6] rounded-2xl overflow-hidden border border-[#e8e6e3] flex items-center justify-center">
           <Image
             src={images[activeImageIndex] || images[0]}
             alt={product.title}
             fill
             priority
-            sizes="(max-width: 1024px) 100vw, 55vw"
-            className="object-cover object-center"
+            sizes="(max-width: 1024px) 100vw, 45vw"
+            className="object-contain p-4 sm:p-6"
           />
 
           {discountPercent && (
@@ -191,7 +191,7 @@ export const ProductDetailInteractive: React.FC<ProductDetailInteractiveProps> =
       </div>
 
       {/* Right: Product Purchase Actions & Details */}
-      <div className="lg:col-span-5 flex flex-col justify-between">
+      <div className="lg:col-span-6 flex flex-col justify-between">
         <div>
           {/* Brand & Category */}
           <div className="flex items-center space-x-2 text-xs uppercase tracking-widest text-neutral-400 font-semibold mb-2">
