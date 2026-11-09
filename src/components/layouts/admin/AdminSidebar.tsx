@@ -253,9 +253,9 @@ export function AdminSidebar() {
                 <Receipt className="w-4 h-4 text-neutral-600 flex-shrink-0" />
                 {!collapsed && <span>Orders</span>}
               </div>
-              {!collapsed && (
+              {!collapsed && counts.pendingOrders > 0 && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff4600] text-white">
-                  {counts.pendingOrders > 0 ? counts.pendingOrders : '14'}
+                  {counts.pendingOrders}
                 </span>
               )}
             </Link>
