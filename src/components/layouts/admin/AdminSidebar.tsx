@@ -70,26 +70,27 @@ export function AdminSidebar() {
 
   return (
     <aside
-      className={`relative flex flex-col h-screen bg-[#faf9f8] border-r border-[#e8e6e3] text-neutral-800 transition-all duration-300 z-20 flex-shrink-0 ${
-        collapsed ? 'w-18' : 'w-64'
-      }`}
+      className={`relative flex flex-col h-screen bg-[#faf9f8] border-r border-[#e8e6e3] text-neutral-800 transition-all duration-300 z-20 flex-shrink-0 ${collapsed ? 'w-18' : 'w-64'
+        }`}
     >
       {/* Brand Header */}
       <div className="flex items-center justify-between px-5 h-16 border-b border-[#e8e6e3] flex-shrink-0 bg-white">
         {!collapsed && (
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center text-xs font-bold tracking-wider flex-shrink-0 shadow-2xs">
-              M
-            </div>
-            <div className="min-w-0">
-              <span className="font-editorial text-base font-bold text-neutral-900 tracking-tight leading-none block">
-                MODORA
-              </span>
-              <span className="text-[9px] uppercase tracking-widest font-extrabold text-[#ff4600] leading-none block mt-0.5">
-                ATELIER ADMIN
-              </span>
-            </div>
-          </div>
+          <Link href="/">
+            <div className="flex items-center gap-3 overflow-hidden">
+
+              <div className="w-8 h-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center text-xs font-bold tracking-wider flex-shrink-0 shadow-2xs">
+                M
+              </div>
+              <div className="min-w-0">
+                <span className="font-editorial text-base font-bold text-neutral-900 tracking-tight leading-none block">
+                  MODORA
+                </span>
+                <span className="text-[9px] uppercase tracking-widest font-extrabold text-[#ff4600] leading-none block mt-0.5">
+                  ATELIER ADMIN
+                </span>
+              </div>
+            </div></Link>
         )}
         <button
           type="button"
@@ -112,11 +113,10 @@ export function AdminSidebar() {
           )}
           <Link
             href="/admin/dashboard"
-            className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
-              pathname === '/admin/dashboard'
+            className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${pathname === '/admin/dashboard'
                 ? 'bg-[#ff4600] text-white shadow-2xs'
                 : 'text-neutral-700 hover:bg-neutral-200/60 hover:text-neutral-900'
-            }`}
+              }`}
           >
             <div className="flex items-center gap-3">
               <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
@@ -139,11 +139,10 @@ export function AdminSidebar() {
             <button
               type="button"
               onClick={() => setCatalogOpen((prev) => !prev)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition ${
-                isCatalogRoute
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition ${isCatalogRoute
                   ? 'text-neutral-900 bg-neutral-200/40 font-semibold'
                   : 'text-neutral-700 hover:bg-neutral-200/60 hover:text-neutral-900'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Archive className="w-4 h-4 text-neutral-600 flex-shrink-0" />
@@ -164,11 +163,10 @@ export function AdminSidebar() {
                 {/* All Products */}
                 <Link
                   href="/admin/products"
-                  className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-medium transition ${
-                    pathname === '/admin/products'
+                  className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-medium transition ${pathname === '/admin/products'
                       ? 'text-[#ff4600] bg-orange-50/60 font-semibold'
                       : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-                  }`}
+                    }`}
                 >
                   <span>All Products</span>
                   <span className="text-[11px] font-semibold text-neutral-500">
@@ -179,11 +177,10 @@ export function AdminSidebar() {
                 {/* Add Product */}
                 <Link
                   href="/admin/products/add"
-                  className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-medium transition ${
-                    pathname === '/admin/products/add'
+                  className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-medium transition ${pathname === '/admin/products/add'
                       ? 'text-[#ff4600] bg-orange-50/60 font-semibold'
                       : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-                  }`}
+                    }`}
                 >
                   <span>Add Product</span>
                   <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#fdf0e9] text-[#ff4600] border border-[#ff4600]/10">
@@ -194,11 +191,10 @@ export function AdminSidebar() {
                 {/* Categories */}
                 <Link
                   href="/admin/categories"
-                  className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-medium transition ${
-                    pathname === '/admin/categories'
+                  className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-medium transition ${pathname === '/admin/categories'
                       ? 'text-[#ff4600] bg-orange-50/60 font-semibold'
                       : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-                  }`}
+                    }`}
                 >
                   <span>Categories</span>
                 </Link>
@@ -206,11 +202,10 @@ export function AdminSidebar() {
                 {/* Brands */}
                 <Link
                   href="/admin/brands"
-                  className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-medium transition ${
-                    pathname === '/admin/brands'
+                  className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-medium transition ${pathname === '/admin/brands'
                       ? 'text-[#ff4600] bg-orange-50/60 font-semibold'
                       : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-                  }`}
+                    }`}
                 >
                   <span>Brands</span>
                 </Link>
@@ -230,11 +225,10 @@ export function AdminSidebar() {
             {/* Inventory */}
             <Link
               href="/admin/inventory"
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition ${
-                pathname === '/admin/inventory'
+              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition ${pathname === '/admin/inventory'
                   ? 'bg-neutral-200/60 text-neutral-900 font-semibold'
                   : 'text-neutral-700 hover:bg-neutral-200/60 hover:text-neutral-900'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Warehouse className="w-4 h-4 text-neutral-600 flex-shrink-0" />
@@ -250,11 +244,10 @@ export function AdminSidebar() {
             {/* Orders */}
             <Link
               href="/admin/orders"
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition ${
-                pathname === '/admin/orders'
+              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition ${pathname === '/admin/orders'
                   ? 'bg-neutral-200/60 text-neutral-900 font-semibold'
                   : 'text-neutral-700 hover:bg-neutral-200/60 hover:text-neutral-900'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Receipt className="w-4 h-4 text-neutral-600 flex-shrink-0" />
@@ -270,11 +263,10 @@ export function AdminSidebar() {
             {/* Customers */}
             <Link
               href="/admin/customers"
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition ${
-                pathname === '/admin/customers'
+              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition ${pathname === '/admin/customers'
                   ? 'bg-neutral-200/60 text-neutral-900 font-semibold'
                   : 'text-neutral-700 hover:bg-neutral-200/60 hover:text-neutral-900'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Users className="w-4 h-4 text-neutral-600 flex-shrink-0" />
@@ -294,11 +286,10 @@ export function AdminSidebar() {
           <div className="space-y-0.5">
             <Link
               href="/admin/coupons"
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                pathname === '/admin/coupons'
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${pathname === '/admin/coupons'
                   ? 'bg-neutral-200/60 text-neutral-900 font-semibold'
                   : 'text-neutral-700 hover:bg-neutral-200/60 hover:text-neutral-900'
-              }`}
+                }`}
             >
               <Ticket className="w-4 h-4 text-neutral-600 flex-shrink-0" />
               {!collapsed && <span>Coupons &amp; Deals</span>}
@@ -306,11 +297,10 @@ export function AdminSidebar() {
 
             <Link
               href="/admin/reviews"
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                pathname === '/admin/reviews'
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${pathname === '/admin/reviews'
                   ? 'bg-neutral-200/60 text-neutral-900 font-semibold'
                   : 'text-neutral-700 hover:bg-neutral-200/60 hover:text-neutral-900'
-              }`}
+                }`}
             >
               <MessageSquareQuote className="w-4 h-4 text-neutral-600 flex-shrink-0" />
               {!collapsed && <span>Product Reviews</span>}
@@ -318,11 +308,10 @@ export function AdminSidebar() {
 
             <Link
               href="/admin/banners"
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                pathname === '/admin/banners'
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${pathname === '/admin/banners'
                   ? 'bg-neutral-200/60 text-neutral-900 font-semibold'
                   : 'text-neutral-700 hover:bg-neutral-200/60 hover:text-neutral-900'
-              }`}
+                }`}
             >
               <GalleryHorizontal className="w-4 h-4 text-neutral-600 flex-shrink-0" />
               {!collapsed && <span>Promotional Banners</span>}
@@ -339,11 +328,10 @@ export function AdminSidebar() {
           )}
           <Link
             href="/admin/settings"
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-              pathname === '/admin/settings'
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${pathname === '/admin/settings'
                 ? 'bg-neutral-200/60 text-neutral-900 font-semibold'
                 : 'text-neutral-700 hover:bg-neutral-200/60 hover:text-neutral-900'
-            }`}
+              }`}
           >
             <Settings className="w-4 h-4 text-neutral-600 flex-shrink-0" />
             {!collapsed && <span>Settings</span>}
