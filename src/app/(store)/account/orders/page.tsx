@@ -18,6 +18,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/contexts/authContext';
+import { getAccessToken } from '@/features/auth/services/auth.service';
 
 export interface OrderItem {
   id: string;
@@ -60,8 +61,13 @@ export default function AccountOrdersPage() {
         setIsLoading(true);
         setError(null);
         const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+        const token = getAccessToken();
         const res = await fetch(`${API_URL}/orders`, {
           credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
 
         let fetchedList: OrderRecord[] = [];

@@ -16,6 +16,7 @@ import {
   Package,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/contexts/authContext';
+import { getAccessToken } from '@/features/auth/services/auth.service';
 
 interface RecentOrder {
   id: string;
@@ -45,8 +46,13 @@ export default function AccountDashboardPage() {
       try {
         setLoadingOrders(true);
         const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+        const token = getAccessToken();
         const res = await fetch(`${API_URL}/orders?limit=3`, {
           credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
 
         let list: RecentOrder[] = [];

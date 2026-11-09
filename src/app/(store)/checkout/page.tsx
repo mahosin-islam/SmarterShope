@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/contexts/authContext';
 import { useAuthModal } from '@/features/auth/contexts/authModal.context';
+import { getAccessToken } from '@/features/auth/services/auth.service';
 
 interface CartItem {
   productId: string;
@@ -203,7 +204,7 @@ export default function CheckoutPage() {
     }
 
     setIsSubmitting(true);
-    let orderNo = `MOD-${Math.floor(100000 + Math.random() * 900000)}`;
+    let orderNo = '';
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -234,73 +235,85 @@ export default function CheckoutPage() {
         couponCode: appliedCoupon || undefined,
       };
 
+      const token = getAccessToken();
       const res = await fetch(`${API_URL}/orders/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: 'include',
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data?.orderNumber) {
-          orderNo = json.data.orderNumber;
-        } else if (json.data?.id) {
-          orderNo = `MOD-${json.data.id.slice(0, 8).toUpperCase()}`;
-        }
+      if (!res.ok) {
+        const errorJson = await res.json().catch(() => null);
+        const errMsg = errorJson?.error?.message || `Checkout failed (${res.status}). Please try again.`;
+        alert(errMsg);
+        setIsSubmitting(false);
+        return;
       }
-    } catch {
-      // If network fails, proceed with generated order number
+
+      const json = await res.json();
+      const realOrder = json.data;
+      orderNo = realOrder?.orderNumber || realOrder?.id || `ORD-${Date.now()}`;
+
+      setPlacedOrderNumber(orderNo);
+
+      // Save real order record locally for immediate customer dashboard reflection
+      try {
+        const newOrderRecord = {
+          id: realOrder?.id || orderNo,
+          orderNumber: orderNo,
+          status: realOrder?.status || 'PENDING',
+          subtotal: Number(realOrder?.subtotal) || subtotal,
+          shippingAmount: Number(realOrder?.shippingAmount) || shippingFee,
+          totalAmount: Number(realOrder?.totalAmount) || finalTotal,
+          createdAt: realOrder?.createdAt || new Date().toISOString(),
+          items: realOrder?.items?.map((it: any) => ({
+            id: it.id,
+            productTitle: it.productTitle,
+            variantTitle: it.variantTitle,
+            quantity: it.quantity,
+            unitPrice: Number(it.unitPrice),
+            total: Number(it.total),
+          })) || cartItems.map((item) => ({
+            id: `${item.productId}-${Date.now()}`,
+            productTitle: item.title,
+            variantTitle: item.variantTitle,
+            quantity: item.quantity,
+            unitPrice: item.price,
+            total: item.price * item.quantity,
+          })),
+          shippingAddress: realOrder?.shippingAddress || {
+            address: detailedAddress,
+            altPhone,
+            deliveryNote,
+          },
+        };
+
+        const existingOrdersRaw = localStorage.getItem('modora_customer_orders');
+        const existingOrders = existingOrdersRaw ? JSON.parse(existingOrdersRaw) : [];
+        existingOrders.unshift(newOrderRecord);
+        localStorage.setItem('modora_customer_orders', JSON.stringify(existingOrders));
+      } catch {
+        // Ignore local storage error
+      }
+
+      // Clear cart in local storage
+      try {
+        localStorage.setItem('modora_cart', JSON.stringify([]));
+        window.dispatchEvent(new Event('cart_updated'));
+      } catch {
+        // Local storage
+      }
+
+      setStep('success');
+    } catch (err: any) {
+      alert(err?.message || 'Network error while placing order. Please check your connection.');
     } finally {
       setIsSubmitting(false);
     }
-
-    setPlacedOrderNumber(orderNo);
-
-    // Save order record locally for immediate customer dashboard reflection
-    try {
-      const newOrderRecord = {
-        id: orderNo,
-        orderNumber: orderNo,
-        status: 'PENDING',
-        subtotal: subtotal,
-        shippingAmount: shippingFee,
-        totalAmount: finalTotal,
-        createdAt: new Date().toISOString(),
-        items: cartItems.map((item) => ({
-          id: `${item.productId}-${Date.now()}`,
-          productTitle: item.title,
-          variantTitle: item.variantTitle,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          total: item.price * item.quantity,
-        })),
-        shippingAddress: {
-          address: detailedAddress,
-          altPhone,
-          deliveryNote,
-        },
-      };
-
-      const existingOrdersRaw = localStorage.getItem('modora_customer_orders');
-      const existingOrders = existingOrdersRaw ? JSON.parse(existingOrdersRaw) : [];
-      existingOrders.unshift(newOrderRecord);
-      localStorage.setItem('modora_customer_orders', JSON.stringify(existingOrders));
-    } catch {
-      //
-    }
-
-    // Clear cart in local storage
-    try {
-      localStorage.setItem('modora_cart', JSON.stringify([]));
-      window.dispatchEvent(new Event('cart_updated'));
-    } catch {
-      // Local storage
-    }
-
-    setStep('success');
   };
 
   if (!mounted) {

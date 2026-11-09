@@ -15,6 +15,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/contexts/authContext';
+import { getAccessToken } from '@/features/auth/services/auth.service';
 
 interface OrderItem {
   id: string;
@@ -85,8 +86,13 @@ function OrderDetailContent() {
         setIsLoading(true);
         setError(null);
         const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+        const token = getAccessToken();
         const res = await fetch(`${API_URL}/orders/${orderId}`, {
           credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
 
         if (res.ok) {

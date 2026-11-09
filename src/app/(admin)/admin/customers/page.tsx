@@ -8,6 +8,7 @@ import {
   Package,
 } from 'lucide-react';
 import Link from 'next/link';
+import { getAccessToken } from '@/features/auth/services/auth.service';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -58,9 +59,15 @@ interface Meta {
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
 async function apiFetch(path: string, options?: RequestInit) {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...((options?.headers as Record<string, string>) ?? {}),
+  };
   const res = await fetch(`${API}${path}`, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) },
+    headers,
     ...options,
   });
   const json = await res.json();

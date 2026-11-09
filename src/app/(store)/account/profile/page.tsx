@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, CheckCircle2, AlertCircle, Loader2, ShieldCheck, Mail, Phone } from 'lucide-react';
 import { useAuth } from '@/features/auth/contexts/authContext';
+import { getAccessToken } from '@/features/auth/services/auth.service';
 
 export default function AccountProfilePage() {
   const { user } = useAuth();
@@ -24,8 +25,13 @@ export default function AccountProfilePage() {
       try {
         setIsLoadingProfile(true);
         const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+        const token = getAccessToken();
         const res = await fetch(`${API_URL}/users/me`, {
           credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
         if (res.ok) {
           const json = await res.json();
@@ -67,10 +73,12 @@ export default function AccountProfilePage() {
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+      const token = getAccessToken();
       const res = await fetch(`${API_URL}/users/me`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: 'include',
         body: JSON.stringify({
