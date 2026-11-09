@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Menu, Search, X, Heart, ShoppingBag, User, LayoutDashboard, LogOut, ChevronDown, Mail, Loader2 } from 'lucide-react';
+import { Menu, Search, X, Heart, User, LayoutDashboard, LogOut, ChevronDown, Mail, Loader2, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/features/auth/contexts/authContext';
 import { useAuthModal } from '@/features/auth/contexts/authModal.context';
 import { useGoogleAccounts } from '@/features/auth/hooks/useGoogleAccounts';
@@ -225,7 +225,7 @@ export const Navbar: React.FC = () => {
             className="relative p-1.5 text-neutral-800 hover:text-[#ff4600] transition-colors"
             aria-label="Cart"
           >
-            <ShoppingBag className="w-5 h-5 stroke-[1.8]" />
+            <ShoppingCart className="w-5 h-5 stroke-[1.8]" />
             {cartCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-[#ff4600] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs animate-in zoom-in-50">
                 {cartCount}
@@ -451,7 +451,7 @@ export const Navbar: React.FC = () => {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-neutral-300">
-                              <ShoppingBag className="w-4 h-4" />
+                              <ShoppingCart className="w-4 h-4" />
                             </div>
                           )}
                         </div>
