@@ -1,85 +1,196 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { HERO_SLIDE } from '@/features/store/home/data/mock-landing-data';
+
+export interface HeroBannerSlide {
+  id: string;
+  categoryName: string;
+  categorySlug: string;
+  href: string;
+  imageUrl: string;
+  alt: string;
+}
+
+const HERO_SLIDES: HeroBannerSlide[] = [
+  {
+    id: 'footwear',
+    categoryName: 'Footwear',
+    categorySlug: 'footwear',
+    href: '/products?category=footwear',
+    imageUrl: 'https://res.cloudinary.com/dzoigbkep/image/upload/v1794195844/roey9xmzc1wbbcq67xa6.jpg',
+    alt: 'Footwear Atelier Collection — Shoes, Loafers & Sneakers',
+  },
+  {
+    id: 'pants-trousers',
+    categoryName: 'Pants & Trousers',
+    categorySlug: 'pants-trousers',
+    href: '/products?category=pants-trousers',
+    imageUrl: 'https://res.cloudinary.com/dzoigbkep/image/upload/v1794195878/dvoeahhykeqtsxgv261v.jpg',
+    alt: 'Pants & Trousers — Tailored Chinos, Slacks & Casual Trousers',
+  },
+  {
+    id: 'shirts',
+    categoryName: 'Shirts',
+    categorySlug: 'shirts',
+    href: '/products?category=shirts',
+    imageUrl: 'https://res.cloudinary.com/dzoigbkep/image/upload/v1794195903/ueo0piklnxkccjaran8v.jpg',
+    alt: 'Shirts — Premium Tailored Oxford & Casual Shirts',
+  },
+];
 
 export const HeroSection: React.FC = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  const totalSlides = HERO_SLIDES.length;
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % totalSlides);
+  }, [totalSlides]);
+
+  const handlePrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
+  }, [totalSlides]);
+
+  // Auto-slide every 5 seconds
+  useEffect(() => {
+    if (isPaused) return;
+
+    const timer = setInterval(() => {
+      handleNext();
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [isPaused, handleNext]);
+
+  // Touch Swipe Handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const isSwipeLeft = distance > 50;
+    const isSwipeRight = distance < -50;
+
+    if (isSwipeLeft) {
+      handleNext();
+    } else if (isSwipeRight) {
+      handlePrev();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
   return (
-    <section className="relative w-full bg-neutral-900 text-white overflow-hidden min-h-[520px] sm:min-h-[580px] lg:min-h-[640px] flex items-end">
-      {/* Background Image with Dark Vignette Gradient */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src={HERO_SLIDE.imageUrl}
-          alt={HERO_SLIDE.headline}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-top opacity-85"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-        <div className="absolute inset-0 bg-black/25" />
-      </div>
+    <section
+      className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-6 sm:py-6"
+      aria-label="Promotional Hero Banners"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Hero Carousel Container */}
+      <div
+        className="group relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.3/1] lg:aspect-[2.6/1] max-h-[500px] min-h-[200px] sm:min-h-[260px] rounded-2xl sm:rounded-3xl overflow-hidden border border-[#e8e6e3] bg-neutral-950 shadow-sm"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Slides Track */}
+        {HERO_SLIDES.map((slide, idx) => {
+          const isActive = idx === currentIndex;
 
-      {/* Content Container */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 pt-20">
-        {/* Top Collection Tag */}
-        <div className="flex justify-end mb-16 sm:mb-24">
-          <span className="text-[11px] sm:text-xs tracking-widest uppercase font-semibold text-neutral-300 bg-black/40 backdrop-blur-md px-3 py-1 rounded">
-            {HERO_SLIDE.tag}
-          </span>
-        </div>
-
-        <div className="max-w-xl">
-          {/* Orange Capsule Badge */}
-          <div className="inline-block bg-[#ff4600] text-white text-[10px] sm:text-[11px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-sm mb-3">
-            {HERO_SLIDE.badge}
-          </div>
-
-          {/* Headline */}
-          <h1 className="font-editorial text-4xl sm:text-5xl lg:text-6xl font-normal leading-[1.08] tracking-tight text-white mb-3">
-            {HERO_SLIDE.headline}
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-sm sm:text-base text-neutral-300 font-light leading-relaxed mb-6 max-w-md">
-            {HERO_SLIDE.subtitle}
-          </p>
-
-          {/* CTA Button */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <Link
-              href={HERO_SLIDE.ctaLink}
-              className="inline-flex items-center justify-center bg-[#ff4600] hover:bg-[#e03e00] text-white font-bold text-xs sm:text-sm tracking-wider uppercase px-8 py-3.5 rounded shadow-lg transition-all hover:shadow-orange-600/30"
+          return (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
+              }`}
             >
-              {HERO_SLIDE.ctaText}
-            </Link>
-          </div>
-        </div>
+              {/* Entire slide is wrapped in Link to corresponding category */}
+              <Link
+                href={slide.href}
+                className="relative block w-full h-full focus:outline-none"
+                aria-label={`Browse ${slide.categoryName}`}
+              >
+                <Image
+                  src={slide.imageUrl}
+                  alt={slide.alt}
+                  fill
+                  priority={idx === 0}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 1280px"
+                  className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.015]"
+                />
 
-        {/* Bottom Carousel Navigation / Pagination */}
-        <div className="flex justify-end items-center mt-6 sm:mt-0">
-          <div className="flex items-center space-x-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded text-xs text-neutral-200">
-            <span className="font-mono text-neutral-300 text-[11px] font-medium tracking-wider">
-              {HERO_SLIDE.pageIndicator}
-            </span>
-            <div className="flex items-center space-x-1 pl-1 border-l border-neutral-700">
-              <button
-                type="button"
-                className="p-1 hover:text-[#ff4600] transition-colors"
-                aria-label="Previous slide"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                className="p-1 hover:text-[#ff4600] transition-colors"
-                aria-label="Next slide"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+                {/* Subtle bottom vignette to ensure indicators are always visible */}
+                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 via-black/15 to-transparent pointer-events-none" />
+              </Link>
             </div>
-          </div>
+          );
+        })}
+
+        {/* Left Arrow Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handlePrev();
+          }}
+          className="absolute left-2.5 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-white/85 hover:bg-white text-neutral-900 shadow-md backdrop-blur-md flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
+          aria-label="Previous Banner Slide"
+        >
+          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+        </button>
+
+        {/* Right Arrow Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleNext();
+          }}
+          className="absolute right-2.5 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-white/85 hover:bg-white text-neutral-900 shadow-md backdrop-blur-md flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
+          aria-label="Next Banner Slide"
+        >
+          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+        </button>
+
+        {/* Bottom Pagination Dots & Category Indicator */}
+        <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
+          {HERO_SLIDES.map((slide, idx) => {
+            const isActive = idx === currentIndex;
+
+            return (
+              <button
+                key={slide.id}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentIndex(idx);
+                }}
+                className={`transition-all duration-300 rounded-full h-1.5 sm:h-2 ${
+                  isActive
+                    ? 'w-5 sm:w-6 bg-[#ff4600]'
+                    : 'w-1.5 sm:w-2 bg-white/60 hover:bg-white'
+                }`}
+                aria-label={`Go to slide ${idx + 1}: ${slide.categoryName}`}
+              />
+            );
+          })}
         </div>
       </div>
     </section>
