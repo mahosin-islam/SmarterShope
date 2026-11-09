@@ -9,7 +9,7 @@ export const Footer: React.FC = () => {
         <div className="mb-10 pb-8 border-b border-[#f0eeed]">
           <div className="flex items-center space-x-2">
             <span className="font-editorial text-2xl font-bold tracking-tight text-[#ff4600]">
-              MODORA
+              MODORAsdfs
             </span>
             <span className="text-neutral-400 font-light">&bull;</span>
             <span className="text-[11px] uppercase tracking-widest text-neutral-500 font-medium">
