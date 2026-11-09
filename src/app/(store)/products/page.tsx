@@ -238,7 +238,7 @@ async function ProductsContent({ searchParams }: ProductsPageProps) {
               {categories.map((c) => (
                 <li key={c.id}>
                   <Link
-                    href={`/products?category=${c.slug}${brand ? `&brand=${brand}` : ''}`}
+                    href={`/products?category=${c.slug}${brand ? `&brand=${brand}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}`}
                     className={`block py-1.5 px-2.5 rounded transition-colors ${
                       category === c.slug ? 'bg-[#ff4600] text-white font-semibold' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
                     }`}
@@ -260,7 +260,7 @@ async function ProductsContent({ searchParams }: ProductsPageProps) {
                 {brands.map((b) => (
                   <li key={b.id}>
                     <Link
-                      href={`/products?brand=${b.slug}${category ? `&category=${category}` : ''}`}
+                      href={`/products?brand=${b.slug}${category ? `&category=${category}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}`}
                       className={`block py-1.5 px-2.5 rounded transition-colors ${
                         brand === b.slug ? 'bg-[#ff4600] text-white font-semibold' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
                       }`}

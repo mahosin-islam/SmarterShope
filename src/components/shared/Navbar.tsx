@@ -1,12 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Menu, Search, X, Heart, ShoppingBag, User, LayoutDashboard, LogOut, ChevronDown, Mail } from 'lucide-react';
+import { Menu, Search, X, Heart, ShoppingBag, User, LayoutDashboard, LogOut, ChevronDown, Mail, Loader2 } from 'lucide-react';
 import { useAuth } from '@/features/auth/contexts/authContext';
 import { useAuthModal } from '@/features/auth/contexts/authModal.context';
 import { useGoogleAccounts } from '@/features/auth/hooks/useGoogleAccounts';
+
+interface SuggestionProduct {
+  id: string;
+  slug: string;
+  title: string;
+  basePrice: number;
+  imageUrl?: string;
+  images?: Array<{ url: string }>;
+  category?: { name: string; slug: string };
+}
+
+interface SuggestionCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 const NAV_LINKS = [
   { label: 'Shop All', href: '/products' },
@@ -26,6 +43,74 @@ export const Navbar: React.FC = () => {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Live predictive search states
+  const [productSuggestions, setProductSuggestions] = useState<SuggestionProduct[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<SuggestionCategory[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Fetch search suggestions with debounce
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length < 2) {
+      setProductSuggestions([]);
+      setCategorySuggestions([]);
+      setIsSearching(false);
+      setShowSearchDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+        const [prodRes, catRes] = await Promise.all([
+          fetch(`${API_URL}/products?search=${encodeURIComponent(query)}&limit=6`),
+          fetch(`${API_URL}/categories`),
+        ]);
+
+        if (prodRes.ok) {
+          const json = await prodRes.json();
+          setProductSuggestions(Array.isArray(json.data) ? json.data : []);
+        } else {
+          setProductSuggestions([]);
+        }
+
+        if (catRes.ok) {
+          const catJson = await catRes.json();
+          const allCats: SuggestionCategory[] = Array.isArray(catJson.data) ? catJson.data : [];
+          const matched = allCats.filter((c) =>
+            c.name.toLowerCase().includes(query.toLowerCase())
+          );
+          setCategorySuggestions(matched.slice(0, 3));
+        } else {
+          setCategorySuggestions([]);
+        }
+
+        setShowSearchDropdown(true);
+      } catch {
+        setProductSuggestions([]);
+        setCategorySuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     const updateCounts = () => {
@@ -265,12 +350,13 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Integrated Search Input Row */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-3">
+      {/* Integrated Search Input Row with Live Autocomplete Dropdown */}
+      <div ref={searchContainerRef} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-3">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             if (searchQuery.trim()) {
+              setShowSearchDropdown(false);
               router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
             }
           }}
@@ -280,21 +366,146 @@ export const Navbar: React.FC = () => {
           <input
             type="text"
             value={searchQuery}
+            onFocus={() => {
+              if (searchQuery.trim().length >= 2) setShowSearchDropdown(true);
+            }}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search garments, shoes, bags & accessories..."
             className="w-full pl-9 pr-9 py-2 text-xs sm:text-sm bg-neutral-50 hover:bg-neutral-100/80 focus:bg-white border border-[#e8e6e3] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#ff4600] focus:border-[#ff4600] transition-all placeholder:text-neutral-400 text-neutral-800"
           />
-          {searchQuery && (
+          {isSearching ? (
+            <Loader2 className="absolute right-3 w-4 h-4 text-neutral-400 animate-spin" />
+          ) : searchQuery ? (
             <button
               type="button"
-              onClick={() => setSearchQuery('')}
+              onClick={() => {
+                setSearchQuery('');
+                setShowSearchDropdown(false);
+              }}
               className="absolute right-3 p-0.5 text-neutral-400 hover:text-neutral-600 focus:outline-none"
               aria-label="Clear search"
             >
               <X className="w-4 h-4" />
             </button>
-          )}
+          ) : null}
         </form>
+
+        {/* Live Search Suggestions Dropdown */}
+        {showSearchDropdown && searchQuery.trim().length >= 2 && (
+          <div className="absolute left-4 right-4 sm:left-6 sm:right-6 lg:left-8 lg:right-8 top-full mt-1.5 bg-white border border-[#e8e6e3] rounded-xl shadow-2xl z-50 overflow-hidden max-h-[460px] overflow-y-auto divide-y divide-neutral-100 animate-in fade-in zoom-in-95">
+            {/* Matching Categories if any */}
+            {categorySuggestions.length > 0 && (
+              <div className="p-3 bg-neutral-50/70">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-2">
+                  Matching Categories
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {categorySuggestions.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        setShowSearchDropdown(false);
+                        setSearchQuery('');
+                        router.push(`/products?category=${cat.slug}`);
+                      }}
+                      className="px-3 py-1.5 bg-white border border-[#e8e6e3] hover:border-[#ff4600] hover:text-[#ff4600] rounded-lg text-xs font-semibold text-neutral-800 transition-colors shadow-2xs flex items-center space-x-1.5"
+                    >
+                      <span>{cat.name}</span>
+                      <span className="text-[10px] text-neutral-400">&rarr;</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Matching Products */}
+            {productSuggestions.length > 0 ? (
+              <div className="p-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 py-1.5 block">
+                  Products ({productSuggestions.length})
+                </span>
+                <div className="space-y-1">
+                  {productSuggestions.map((product) => {
+                    const imgUrl = product.images?.[0]?.url || product.imageUrl || '';
+                    return (
+                      <button
+                        key={product.id}
+                        type="button"
+                        onClick={() => {
+                          setShowSearchDropdown(false);
+                          setSearchQuery('');
+                          router.push(`/products/${product.slug}`);
+                        }}
+                        className="w-full flex items-center space-x-3 p-2.5 rounded-lg hover:bg-[#fff9f5] transition-colors text-left group"
+                      >
+                        {/* Thumbnail */}
+                        <div className="relative w-12 h-14 rounded-lg bg-neutral-100 border border-[#e8e6e3] overflow-hidden shrink-0">
+                          {imgUrl ? (
+                            <Image
+                              src={imgUrl}
+                              alt={product.title}
+                              fill
+                              sizes="48px"
+                              className="object-cover group-hover:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-neutral-300">
+                              <ShoppingBag className="w-4 h-4" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Title, Category & Price */}
+                        <div className="flex-1 min-w-0">
+                          {product.category?.name && (
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 block">
+                              {product.category.name}
+                            </span>
+                          )}
+                          <p className="text-xs sm:text-sm font-semibold text-neutral-900 group-hover:text-[#ff4600] truncate transition-colors">
+                            {product.title}
+                          </p>
+                          <span className="text-xs font-bold text-[#ff4600] mt-0.5 block">
+                            ৳{Number(product.basePrice).toFixed(0)}
+                          </span>
+                        </div>
+
+                        <span className="text-xs text-neutral-300 group-hover:text-[#ff4600] group-hover:translate-x-0.5 transition-all">
+                          &rarr;
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : !isSearching && categorySuggestions.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-xs text-neutral-500">
+                  No products found matching &ldquo;<span className="font-semibold text-neutral-800">{searchQuery}</span>&rdquo;.
+                </p>
+                <p className="text-[11px] text-neutral-400 mt-1">
+                  Try searching for keywords like &ldquo;sneakers&rdquo;, &ldquo;leather&rdquo;, &ldquo;belt&rdquo; or &ldquo;wallet&rdquo;.
+                </p>
+              </div>
+            ) : null}
+
+            {/* Bottom View All CTA */}
+            {productSuggestions.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSearchDropdown(false);
+                  router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                }}
+                className="w-full py-3 px-4 bg-neutral-50 hover:bg-neutral-100 text-xs font-bold uppercase tracking-wider text-neutral-700 hover:text-[#ff4600] text-center transition-colors flex items-center justify-center space-x-1.5"
+              >
+                <span>View all search results for &ldquo;{searchQuery}&rdquo;</span>
+                <span>&rarr;</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Mobile Drawer Menu */}
